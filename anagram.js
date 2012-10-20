@@ -2,7 +2,8 @@
 /*globals Map*/
 'use strict';
 var fs = require('fs'),
-    repl = require('repl');
+    repl = require('repl'),
+    os = require('os');
 
 // Alternatively to hashing like this, one could simply sort the characters in
 // each word alphabetically so 'hello' would become 'ehllo', and use that as the
@@ -31,7 +32,7 @@ function hashWord(word) {
 
 console.time('Reading dictionary');
 
-var dictionary = fs.readFileSync('dictionary.txt').toString().split("\r\n"),
+var dictionary = fs.readFileSync('dictionary.txt').toString().split(os.EOL),
     table = new Map();  // Run node with --harmony
 
 dictionary.forEach(function addWord(word) {
@@ -47,9 +48,11 @@ dictionary.forEach(function addWord(word) {
 console.timeEnd('Reading dictionary');
 
 console.log('Annagrammer ready, give me some words:');
+var cleanRe = /^\s*\(|\s*\)\s*$/g;
+
 repl.start({
     'eval': function (line, context, filename, callback) {
-        var bucket = table.get(hashWord(line));
+        var bucket = table.get(hashWord(line.replace(cleanRe, '')));
         console.log("Here's what I found:");
         callback(null, bucket);
     }
