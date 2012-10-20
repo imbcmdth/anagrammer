@@ -1,59 +1,67 @@
 /*jslint node: true, plusplus: true, bitwise: true*/
 /*globals Map*/
 'use strict';
+
 var fs = require('fs'),
     repl = require('repl'),
-    os = require('os');
+    os = require('os'),
+    readLines = require('./lib/readlines.js'),
+    ATree = require('./atree.js');
 
-// Alternatively to hashing like this, one could simply sort the characters in
-// each word alphabetically so 'hello' would become 'ehllo', and use that as the
-// key for a bucket.  This would also work on non-ASCII words.
+function getMatchCount(string, re) {
+    var matchCount = string.match(re);
+    matchCount = matchCount ? matchCount.length : 0;
+    return matchCount;
+}
 
-function hashWord(word) {
-    // I want to hash this to a number, but I'm limited in this bit-building approach
-    // by Javascript, in that the left shift operator returns a 32 bit signed integer, so
-    // since I need 26*3 = 78 bits total, I'm going to use 2 27 bit integers and 1 24 bit integer.
-    // The resulting hash will be the concatenation of the base32 values for each of these pieces.
+function countLetters(word) {
     var pieces = [0, 0, 0],
         counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         i;
     for (i = 0; i < word.length; i++) {
         counts[word.charCodeAt(i) - 97]++;
     }
-    for (i = 0; i < 9; i++) {
-        pieces[0] += counts[i] << (i * 3);
-        pieces[1] += counts[i + 9] << (i * 3);
-        if (i < 8) {
-            pieces[2] += counts[i + 18] << (i * 3);
-        }
-    }
-    return pieces[2].toString(32) + '@' + pieces[1].toString(32) + '@' + pieces[0].toString(32);
+    return counts;
 }
+
+var filename = 'dictionary.txt';
 
 console.time('Reading dictionary');
 
-var dictionary = fs.readFileSync('dictionary.txt').toString().split(os.EOL),
-    table = new Map();  // Run node with --harmony
+var dictionary = fs.createReadStream(filename);
+var tree = new ATree();
 
-dictionary.forEach(function addWord(word) {
-    var hash = hashWord(word),
-        bucket = table.get(hash);
-    if (!bucket) {
-        bucket = [];
-        table.set(hash, bucket);
-    }
-    bucket.push(word);
-});
+dictionary.on("open", function(fd){
+        readLines(
+            dictionary,
+            function(line, lineNumber) {
+                var hash = countLetters(line);
+                tree.addWord(hash, line);
+            },
+            function(){
+                console.timeEnd('Reading dictionary');
 
-console.timeEnd('Reading dictionary');
+                console.log('Annagrammer ready, give me some words:');
+                var cleanRe = /^\s*\(|\s*\)\s*$/g;
+                var reqWildcardRe = /[\?]/g;
+                var optWildcardRe = /[\*]/g;
 
-console.log('Annagrammer ready, give me some words:');
-var cleanRe = /^\s*\(|\s*\)\s*$/g;
+                repl.start({
+                    'eval': function (line, context, filename, callback) {
+                        line = line.toLowerCase();
 
-repl.start({
-    'eval': function (line, context, filename, callback) {
-        var bucket = table.get(hashWord(line.replace(cleanRe, '')));
-        console.log("Here's what I found:");
-        callback(null, bucket);
-    }
-});
+                        var reqWildcardCount = getMatchCount(line, reqWildcardRe);
+                        var optWildcardCount = getMatchCount(line, optWildcardRe);
+
+                        var bucket = tree.findWords(countLetters(line.replace(cleanRe, '')), reqWildcardCount, optWildcardCount);
+
+                        if(Array.isArray(bucket))
+                            console.log("Here's what I found:");
+
+                        callback(null, bucket);
+                    }
+                });
+            });
+    });
+
+
