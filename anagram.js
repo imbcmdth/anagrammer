@@ -6,7 +6,7 @@ var fs = require('fs'),
     repl = require('repl'),
     os = require('os'),
     readLines = require('./lib/readlines.js'),
-    ATree = require('./atree.js');
+    ATree = require('./lib/atree.js');
 
 function getMatchCount(string, re) {
     var matchCount = string.match(re);
