@@ -1,10 +1,14 @@
+# Anagrammer.js
+
 Just a simple anagrammer with wildcard support -- just because.
+
+## Usage
 
 Run with `node anagram.js`
 
 When the repl prompt appears, type words. Use `*` for an optional wildcard and `?` for a required wildcard character.
 
-== Examples
+## Examples
 
 No wildcards:
 ````
