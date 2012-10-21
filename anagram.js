@@ -26,10 +26,14 @@ function getMatchCount(string, re) {
 }
 
 function countLetters(word) {
-    var counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    var counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         i;
     for (i = 0; i < word.length; i++) {
-        counts[word.charCodeAt(i) - 97]++;
+        var code = word.charCodeAt(i);
+        if(code >= 97) code -= 97;
+        else if(code >= 48 && code <= 57) code -= 22;
+        else continue;
+        counts[code]++;
     }
     return counts;
 }
