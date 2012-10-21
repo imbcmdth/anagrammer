@@ -56,8 +56,12 @@ You can also optionally provide one or more single-character parts-of-speech cod
 ## Examples
 
 ### No Wildcards; No Parts-of-Speech
+Input:
 ````
 > its
+````
+Output:
+````
 Here's what I found:
 { Noun: [ 'it\'s', 'tsi' ],
   'Definite Article': [ 'its' ],
@@ -67,15 +71,23 @@ Here's what I found:
 ````
 
 ### No Wildcards; Only Nouns
+Input:
 ````
 > booker(N)
+````
+Output:
+````
 Here's what I found:
 { Noun: [ 'Booker', 'Brooke', 'booker' ] }
 ````
 
 ### Two Optional Wildcard Characters; Only Verbs
+Input:
 ````
 > book**(V)
+````
+Output:
+````
 Here's what I found:
 { 'Verb (usu participle)':
    [ 'betook',
@@ -86,15 +98,23 @@ Here's what I found:
 ````
 
 ### Two Required Wildcard Characters; Only Adjectives
+Input:
 ````
 > book??(A)
+````
+Output:
+````
 Here's what I found:
 { Adjective: [ 'booked' ] }
 ````
 
 ### One Required and One Optional Wildcard Character; Only Nouns
+Input:
 ````
 > book?*(N)
+````
+Output:
+````
 Here's what I found:
 { Noun:
    [ 'Bocock',
