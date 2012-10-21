@@ -8,6 +8,17 @@ var fs = require('fs'),
     readLines = require('./lib/readlines.js'),
     ATree = require('./lib/atree.js');
 
+var cleanRe = /^\s*\(|\s*\)\s*$/g;
+var reqWildcardRe = /[\?]/g;
+var optWildcardRe = /[\*]/g;
+var partsofSpeechRe = /\(([\w]+)\)/;
+
+//var filename = 'dictionary.txt';
+var filename = 'part-of-speech.txt';
+
+var dictionary = fs.createReadStream(filename);
+var tree = new ATree();
+
 function getMatchCount(string, re) {
     var matchCount = string.match(re);
     matchCount = matchCount ? matchCount.length : 0;
@@ -15,8 +26,7 @@ function getMatchCount(string, re) {
 }
 
 function countLetters(word) {
-    var pieces = [0, 0, 0],
-        counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    var counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         i;
     for (i = 0; i < word.length; i++) {
         counts[word.charCodeAt(i) - 97]++;
@@ -24,41 +34,108 @@ function countLetters(word) {
     return counts;
 }
 
-var filename = 'dictionary.txt';
+function formatPartsOfSpeech(POS) {
+    return partsOfSpeechDescriptions[POS];
+}
 
-console.time('Reading dictionary');
+var allPartsOfSpeech = [
+    "N",
+    "p",
+    "h",
+    "V",
+    "t",
+    "i",
+    "A",
+    "v",
+    "C",
+    "P",
+    "!",
+    "r",
+    "D",
+    "I",
+    "o"
+];
 
-var dictionary = fs.createReadStream(filename);
-var tree = new ATree();
+var partsOfSpeechDescriptions = {
+    "N" : "Noun",
+    "p" : "Plural",
+    "h" : "Noun Phrase",
+    "V" : "Verb (usu participle)",
+    "t" : "Verb (transitive)",
+    "i" : "Verb (intransitive)",
+    "A" : "Adjective",
+    "v" : "Adverb",
+    "C" : "Conjunction",
+    "P" : "Preposition",
+    "!" : "Interjection",
+    "r" : "Pronoun",
+    "D" : "Definite Article",
+    "I" : "Indefinite Article",
+    "o" : "Nominative"
+};
+
+function makeWordObject(lineData) {
+    var a = lineData.split("\t"); // split into [word, part_of_speech];
+    var b = a[1].split("|"); // split part of speech into old and new
+    var c = b[b.length-1].split(''); // split into letters
+    var word = {
+        'word': a[0],
+        'pos': c
+    };
+
+//    word['parts of speech'] = c.map(function(e){ return partsOfSpeech[e]; });
+
+    return word;
+}
+
+function getPartsOfSpeech(word) {
+    var partsOfSpeech = word.match(partsofSpeechRe);
+    if(partsOfSpeech == null || partsOfSpeech.length < 2) return allPartsOfSpeech;
+    return partsOfSpeech[1].split('');
+}
+
+console.time('Reading dictionary and creating tree');
 
 dictionary.on("open", function(fd){
         readLines(
             dictionary,
             function(line, lineNumber) {
-                var hash = countLetters(line);
-                tree.addWord(hash, line);
+                var wordObject = makeWordObject(line);
+                var letterCounts = countLetters(wordObject.word.toLowerCase());
+
+                tree.addWord(letterCounts, wordObject.word, wordObject.pos);
             },
             function(){
-                console.timeEnd('Reading dictionary');
+                console.timeEnd('Reading dictionary and creating tree');
 
-                console.log('Annagrammer ready, give me some words:');
-                var cleanRe = /^\s*\(|\s*\)\s*$/g;
-                var reqWildcardRe = /[\?]/g;
-                var optWildcardRe = /[\*]/g;
-
+                console.log('Anagrammer ready, give me some words:');
+                console.log(partsOfSpeechDescriptions);
                 repl.start({
                     'eval': function (line, context, filename, callback) {
-                        line = line.toLowerCase();
+                        line = line.replace(cleanRe, '');
+                        var partsOfSpeech = getPartsOfSpeech(line);
+                        line = line.replace(partsofSpeechRe, '');
 
                         var reqWildcardCount = getMatchCount(line, reqWildcardRe);
                         var optWildcardCount = getMatchCount(line, optWildcardRe);
+                        var letterCounts = countLetters(line.toLowerCase());
 
-                        var bucket = tree.findWords(countLetters(line.replace(cleanRe, '')), reqWildcardCount, optWildcardCount);
+                        console.time('Finding anagrams');
+                        var bucket = tree.findWords(letterCounts, reqWildcardCount, optWildcardCount, partsOfSpeech);
+                        console.timeEnd('Finding anagrams');
 
-                        if(Array.isArray(bucket))
-                            console.log("Here's what I found:");
+                        console.log("Here's what I found:");
 
-                        callback(null, bucket);
+                        var response = {};
+
+                        for(var POS in bucket) {
+                            if(bucket.hasOwnProperty(POS)) {
+                                var description = formatPartsOfSpeech(POS);
+                                response[description] = bucket[POS];
+                            }
+                        }
+
+                        callback(null, response);
                     }
                 });
             });
