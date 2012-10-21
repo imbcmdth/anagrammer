@@ -11,7 +11,7 @@ var fs = require('fs'),
 var cleanRe = /^\s*\(|\s*\)\s*$/g;
 var reqWildcardRe = /[\?]/g;
 var optWildcardRe = /[\*]/g;
-var partsofSpeechRe = /\(([\w]+)\)/;
+var partsofSpeechRe = /\(([\w\!]+)\)/;
 
 //var filename = 'dictionary.txt';
 var filename = 'part-of-speech.txt';
@@ -120,22 +120,25 @@ dictionary.on("open", function(fd){
                         var optWildcardCount = getMatchCount(line, optWildcardRe);
                         var letterCounts = countLetters(line.toLowerCase());
 
-                        console.time('Finding anagrams');
                         var bucket = tree.findWords(letterCounts, reqWildcardCount, optWildcardCount, partsOfSpeech);
-                        console.timeEnd('Finding anagrams');
-
-                        console.log("Here's what I found:");
 
                         var response = {};
+                        var isEmpty = true;
 
                         for(var POS in bucket) {
                             if(bucket.hasOwnProperty(POS)) {
+                                isEmpty = false;
                                 var description = formatPartsOfSpeech(POS);
                                 response[description] = bucket[POS];
                             }
                         }
 
-                        callback(null, response);
+                        if(!isEmpty) {
+                            console.log("Here's what I found:");
+                            callback(null, response);
+                        } else {
+                            callback(null, "No matches found.");
+                        }
                     }
                 });
             });
