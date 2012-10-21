@@ -17,25 +17,41 @@ You can also optionally provide one or more single-character parts-of-speech cod
 ### Wildcards
 
 > ? - Required Character
-> * - Optional Character
+
+> \* - Optional Character
 
 ### Parts Of Speech Codes
 
 > N - Noun
+
 > p - Plural
+
 > h - Noun Phrase
+
 > V - Verb (usu participle)
+
 > t - Verb (transitive)
+
 > i - Verb (intransitive)
+
 > A - Adjective
+
 > v - Adverb
+
 > C - Conjunction
+
 > P - Preposition
+
 > ! - Interjection
+
 > r - Pronoun
+
 > D - Definite Article
+
 > I - Indefinite Article
+
 > o - Nominative
+
 
 ## Examples
 
@@ -59,6 +75,7 @@ Here's what I found:
 
 ### Two Optional Wildcard Characters; Only Verbs
 ````
+> book**(V)
 Here's what I found:
 { 'Verb (usu participle)':
    [ 'betook',
