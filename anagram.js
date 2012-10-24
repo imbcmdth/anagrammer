@@ -38,22 +38,22 @@ dictionary.on("open", function(fd){
 						var optWildcardCount = wordUtils.getMatchCount(line, wordUtils.optWildcardRe);
 						var letterCounts = wordUtils.countLetters(line.toLowerCase());
 
-						var bucket = tree.findWords(letterCounts, reqWildcardCount, optWildcardCount, partsOfSpeech);
+						var response = tree.findWords(letterCounts, reqWildcardCount, optWildcardCount, partsOfSpeech);
 
-						var response = {};
 						var isEmpty = true;
 
-						for(var POS in bucket) {
-							if(bucket.hasOwnProperty(POS)) {
+						for(var POS in response.words) {
+							if(response.words.hasOwnProperty(POS)) {
 								isEmpty = false;
 								var description = wordUtils.formatPartsOfSpeech(POS);
-								response[description] = bucket[POS];
+								response.words[description] = response.words[POS];
+								delete response.words[POS];
 							}
 						}
 
-						if(!isEmpty) {
+						if(response.count > 0) {
 							console.log("Here's what I found:");
-							callback(null, response);
+							callback(null, response.words);
 						} else {
 							callback(null, "No matches found.");
 						}

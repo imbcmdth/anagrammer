@@ -1,13 +1,67 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<link rel="stylesheet" type="text/css" href="/bootstrap/css/bootstrap.css">
-		<script type="text/javascript" src="/libs/jquery.js"></script>
+		<link rel="stylesheet" type="text/css" href="/bootstrap/css/bootstrap-responsive.css">
+		<script type="text/javascript" src="/libs/jquery-1.8.2.js"></script>
 		<script type="text/javascript" src="/libs/underscore.js"></script>
 		<script type="text/javascript" src="/libs/json2.js"></script>
+		<script type="text/javascript" src="/libs/backbone.js"></script>
 		<script type="text/javascript" src="/bootstrap/js/bootstrap.js"></script>
+		<script type="text/javascript" src="/app.js"></script>
+		<script type="text/javascript" src="/router.js"></script>
+		<script type="text/javascript" src="/models.js"></script>
+		<script type="text/javascript" src="/models.js"></script>
+		<script type="text/javascript" src="/views.js"></script>
+		<script type="text/javascript" src="/libs/word_utils.js"></script>
+		<script type="text/template" id="anagram_template">
+			<% var shownSpecifier = "in"; %>
+			<div class="accordion" id="accordion">
+				<h3>Ananagrams for &quot;<%= id %>&quot;</h3>
+				<% _.each(words, function(wordlist, POS) { %>
+				<div class="accordion-group">
+					<div class="accordion-heading">
+						<a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse<%= POS %>">
+						<%= wordUtilities.formatPartsOfSpeech(POS) %>
+						</a>
+					</div>
+					<div id="collapse<%= POS %>" class="accordion-body collapse <%= shownSpecifier %>">
+						<div class="accordion-inner">
+						<% _.each(wordlist, function(word){ %>
+							<div><%= word %></div>
+						<% });
+						shownSpecifier = ""; %>
+						</div>
+					</div>
+				</div>
+				<% }); %>
+			</div>
+		</script>
 	<body>
+		<div class="container-fluid">
+			<div class="row-fluid">
+				<h1>Anagram Finder</h1>
+			</div>
+			<div class="row-fluid">
+				<div class="span4">
+					<form id="search-form">
+						<div>
+							<input id="anagram-input" type="text" placeholder="Enter a word...">
+						</div>
+					</form>
+				</div>
+				<div class="span8" id="anagram_container">
+				</div>
+			</div>
+		</div>
 		<script>
-			var anagram = new Anagram({id: 'booker??**(N)'});
-			console.log(anagram);
+			// Start Backbone history a neccesary step for bookmarkable URL's
+			Backbone.history.start();
+
+			$('#anagram-input').on('keyup', function _changeAnagramInput(e){console.log(e)
+				var anagram = e.currentTarget.value;
+				app_router.navigate('anagram/' + anagram, {trigger: true, replace: true});
+			});
+
 		</script>

@@ -14,27 +14,19 @@ var tree = new ATree();
 
 function getAnagram(req, res) {
     var lastSlash = req.url.lastIndexOf('/') + 1
-    var line = req.url.slice(lastSlash);
-    line = line.replace(wordUtils.cleanRe, '');
-    var partsOfSpeech = wordUtils.getPartsOfSpeech(line);
-    line = line.replace(wordUtils.partsofSpeechRe, '');
+    var originalLine = decodeURIComponent(req.url.slice(lastSlash));
+//    line = line.replace(wordUtils.cleanRe, '');
+    var partsOfSpeech = wordUtils.getPartsOfSpeech(originalLine);
+    var line = originalLine.replace(wordUtils.partsofSpeechRe, '');
 
-    var reqWildcardCount = wordUtils.getMatchCount(line, wordUtils.reqWildcardRe);
-    var optWildcardCount = wordUtils.getMatchCount(line, wordUtils.optWildcardRe);
+    var reqWildcardCount = Math.min(5, wordUtils.getMatchCount(line, wordUtils.reqWildcardRe));
+    var optWildcardCount = Math.min(5, wordUtils.getMatchCount(line, wordUtils.optWildcardRe));
     var letterCounts = wordUtils.countLetters(line.toLowerCase());
 
-    var bucket = tree.findWords(letterCounts, reqWildcardCount, optWildcardCount, partsOfSpeech);
+    var response = tree.findWords(letterCounts, reqWildcardCount, optWildcardCount, partsOfSpeech);
 
-   /* var response = {};
-
-    for(var POS in bucket) {
-        if(bucket.hasOwnProperty(POS)) {
-            var description = wordUtils.formatPartsOfSpeech(POS);
-            response[description] = bucket[POS];
-        }
-    }*/
-
-    res.end(JSON.stringify(bucket));
+    response.id = originalLine;
+    res.end(JSON.stringify(response));
 }
 
 console.time('Reading dictionary and creating tree');
@@ -60,13 +52,10 @@ dictionary.on("open", function(fd){
                     .use(connect.directory('public'))
                     .use(connect.cookieParser())
                     .use(connect.session({ secret: ' pink hippos can\'t fly at noon '}))
-                    .use('/anagram', getAnagram)
-                    .use(function(req, res){
-                        res.end('Hello from Connect!\n');
-                });
+                    .use('/anagram', getAnagram);
 
-                http.createServer(app).listen(3000);
-                console.log("Server created on port 3000");
+                http.createServer(app).listen(3001);
+                console.log("Server created on port 3001");
             }
         )
     }
